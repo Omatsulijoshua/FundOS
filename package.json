@@ -23,7 +23,8 @@
       "unrs-resolver",
       "@prisma/engines",
       "prisma",
-      "@prisma/client"
+      "@prisma/client",
+      "@scarf/scarf"
     ]
   },
   "packageManager": "pnpm@11.18.0"
