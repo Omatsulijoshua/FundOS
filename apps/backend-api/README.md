@@ -72,6 +72,13 @@ We have established the core micro-monolith framework and global request/respons
    - **Real-Time Trade Webhooks**: Exposes endpoints (`POST /integrations/webhooks/:provider` where provider can be `mt5`, `ctrader`, or `dxtrade`) to receive orders execution, position details, and balance modifications.
    - **Balance & Equity Synchronization**: Syncs trade volume, asset symbols, ticket prices, and net profits instantly, updating internal trading account balance ledgers and executing rule audits.
 
+10. **Risk and Fraud Analysis Engine (`src/modules/risk/`)** (Phase 11)
+    - **Advanced Hedging Check**: Verifies that traders do not maintain concurrent opposing trades (BUY & SELL) on the same asset.
+    - **Sizing Spike Lock**: Flags trades with volumes exceeding 3.5x the average volume of past trades to prevent leverage abuse.
+    - **Behavioral Risk Scoring**: Algorithmic scoring evaluating historical win rates, profit factors, and revenge trading tendencies (trades opened within 10 minutes of a loss), caching values in `RiskScore` logs.
+    - **Suspension Enforcement**: Restricts rule-breaking accounts by shifting status to `VIOLATED`, flagging `ChallengePurchase` as `FAILED`, and writing metadata logs.
+    - **Admin Overrides Controller**: Allows authorized organization managers to delete violations, restore accounts to `ACTIVE`, and re-authorize trading actions.
+
 ---
 
 ## 🚀 Running Locally

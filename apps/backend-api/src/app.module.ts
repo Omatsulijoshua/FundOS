@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { ChallengeModule } from './modules/challenge/challenge.module';
 import { IntegrationModule } from './modules/integration/integration.module';
+import { RiskModule } from './modules/risk/risk.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
@@ -20,6 +21,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     TenantModule,
     ChallengeModule,
     IntegrationModule,
+    RiskModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
