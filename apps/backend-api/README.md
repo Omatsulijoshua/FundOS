@@ -52,6 +52,13 @@ We have established the core micro-monolith framework and global request/respons
    - **Two-Factor Authentication (2FA)**: Generates random TOTP shared secrets, builds QR codes via data URLs, verifies confirmation codes, and enforces verification on subsequent logins.
    - **Rotate & Clear Sessions**: Revokes sessions dynamically on logout and rotates tokens on session refresh.
 
+7. **Multi-Tenancy Context & Guards (`src/common/middleware/`, `src/modules/tenant/`)** (Phase 6)
+   - **Dynamic Context Parsing**: `TenantMiddleware` extracts the tenant slug from either custom headers (`x-tenant-slug`) or subdomains from custom host headers, querying the database to fetch active organization states. It automatically skips localhost/IP mappings to prevent dev environment routing collisions.
+   - **Tenant Context Decorator**: `@CurrentTenant()` parameter decorator to directly inject the active tenant object into controller parameters.
+   - **Membership Lock (`TenantMemberGuard`)**: Verifies that the authenticated JWT user is a registered member of the resolved tenant organization.
+   - **Role-Based Access Control (`RolesGuard`)**: Checks membership roles (e.g. `ORG_ADMIN`, `TRADER`, `SUPPORT_AGENT`) against endpoints annotated with the `@Roles()` decorator.
+   - **Dynamic Branding API**: Exposes endpoints (`GET /tenant/branding`) to pull colors/logos dynamically, and admin endpoints (`PATCH /tenant/settings`, `PATCH /tenant/branding`) to customize payment configurations, custom domains, and risk limits.
+
 ---
 
 ## 🚀 Running Locally
