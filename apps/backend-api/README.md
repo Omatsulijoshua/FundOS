@@ -79,6 +79,12 @@ We have established the core micro-monolith framework and global request/respons
     - **Suspension Enforcement**: Restricts rule-breaking accounts by shifting status to `VIOLATED`, flagging `ChallengePurchase` as `FAILED`, and writing metadata logs.
     - **Admin Overrides Controller**: Allows authorized organization managers to delete violations, restore accounts to `ACTIVE`, and re-authorize trading actions.
 
+11. **Payments processing & Payouts Engine (`src/modules/payment/`)** (Phase 12)
+    - **Stripe Checkout Sessions**: Generates customized checkout forms redirecting users to secure Stripe portals using tenant custom API keys or falling back to local sandbox redirect URLs for testing.
+    - **Trader Payout requests**: Allows funded traders to request withdrawals from their USD wallets (supporting BANK_WIRE, CRYPTO, DEEL, and PAYPAL methods), validating and locking requested balances.
+    - **Administrative Payout control**: Exposes interfaces for managers to audit pending withdrawals, release payouts, log transactions, and reject requests (restoring locked balances).
+    - **Checkout Session Callback Webhooks**: Standard listeners to capture Stripe transaction states, verify challenge purchases, and trigger automated MT5/cTrader simulated credentials provisioning.
+
 ---
 
 ## 🚀 Running Locally
