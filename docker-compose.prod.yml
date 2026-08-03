@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fundos-postgres-prod
+    restart: always
+    ports:
+      - '5435:5432'
+    environment:
+      POSTGRES_USER: fundos_admin
+      POSTGRES_PASSWORD: fundos_secure_password_2026
+      POSTGRES_DB: fundos_db
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    networks:
+      - fundos-prod-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: fundos-redis-prod
+    restart: always
+    ports:
+      - '6382:6379'
+    volumes:
+      - redisdata_prod:/data
+    networks:
+      - fundos-prod-network
+
+  backend-api:
+    build:
+      context: .
+      dockerfile: apps/backend-api/Dockerfile
+    container_name: fundos-backend-prod
+    restart: always
+    ports:
+      - '3001:3001'
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://fundos_admin:fundos_secure_password_2026@postgres:5432/fundos_db?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=fundos_production_secret_key_2026_change_me
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+    networks:
+      - fundos-prod-network
+
+  trader-dashboard:
+    build:
+      context: .
+      dockerfile: apps/trader-dashboard/Dockerfile
+    container_name: fundos-trader-dashboard-prod
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend-api
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+    networks:
+      - fundos-prod-network
+
+  admin-dashboard:
+    build:
+      context: .
+      dockerfile: apps/admin-dashboard/Dockerfile
+    container_name: fundos-admin-dashboard-prod
+    restart: always
+    ports:
+      - '3002:3002'
+    depends_on:
+      - backend-api
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+    networks:
+      - fundos-prod-network
+
+volumes:
+  pgdata_prod:
+  redisdata_prod:
+
+networks:
+  fundos-prod-network:
+    driver: bridge
