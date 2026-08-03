@@ -48,10 +48,16 @@ export class ChallengeService {
       throw new BadRequestException('User is not a member of this organization');
     }
 
-    // Resolve platform object
+    // Resolve platform object matching both abbreviation and full name
     const platformObj = await this.prisma.tradingPlatform.findFirst({
       where: {
-        name: dto.platform,
+        name: {
+          in: [
+            dto.platform,
+            dto.platform === 'MT5' ? 'MetaTrader 5' : '',
+            dto.platform === 'CTRADER' ? 'cTrader' : '',
+          ].filter(Boolean),
+        },
         isActive: true,
       },
     });
