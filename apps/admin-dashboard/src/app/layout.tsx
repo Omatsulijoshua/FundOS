@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,13 +7,45 @@ export const metadata: Metadata = {
   description: "Proprietary Trading Firm Operating System - Admin Portal",
 };
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerList = await headers();
+  const host = headerList.get('host') || 'localhost';
+  const slug = host.split('.')[0] || 'default';
+
+  let branding = {
+    primaryColor: '#4f46e5', // Default Indigo for Admin
+    accentColor: '#30b0c7',
+    companyName: 'FundOS',
+  };
+
+  try {
+    const res = await fetch(`http://localhost:3001/api/v1/tenant/branding`, {
+      headers: {
+        'x-tenant-slug': slug,
+      },
+      next: { revalidate: 60 },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data) {
+        branding.primaryColor = data.primaryColor || branding.primaryColor;
+        branding.accentColor = data.accentColor || branding.accentColor;
+        branding.companyName = data.companyName || branding.companyName;
+      }
+    }
+  } catch (e) {
+    // Fallback if API not running
+  }
+
   return (
-    <html lang="en" className="h-full antialiased dark">
+    <html lang="en" className="h-full antialiased dark" style={{
+      ['--primary-color' as any]: branding.primaryColor,
+      ['--accent-color' as any]: branding.accentColor,
+    }}>
       <body className="min-h-full bg-background text-foreground font-sans flex overflow-hidden">
         {/* Admin Sidebar */}
         <aside className="w-64 border-r border-border bg-card flex flex-col justify-between hidden md:flex shrink-0">
