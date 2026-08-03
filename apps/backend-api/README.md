@@ -66,6 +66,12 @@ We have established the core micro-monolith framework and global request/respons
    - **Real-Time Drawdown & Profit Checks**: Evaluates equity fluctuations against strict limits (such as daily drawdown percentage, maximum overall drawdown, target profit milestones, and minimum unique trading days).
    - **Automatic Phase Progression**: Frozen accounts that violate rules are marked `VIOLATED`. Accounts that pass successfully are marked `ARCHIVED`, triggering automated progressions from Phase 1 to Phase 2, and Phase 2 to Funded.
 
+9. **Trading Platform Integrations & Webhooks (`src/modules/integration/`)** (Phase 10)
+   - **Simulated Broker API bridges**: Mimics connections to external MT5 WebAPI managers and cTrader OpenAPI gateways to configure simulated accounts.
+   - **Emergency Auto-Close Lock**: Automatically fires emergency HTTP calls to close all active exposure on the broker server if an equity rule is violated.
+   - **Real-Time Trade Webhooks**: Exposes endpoints (`POST /integrations/webhooks/:provider` where provider can be `mt5`, `ctrader`, or `dxtrade`) to receive orders execution, position details, and balance modifications.
+   - **Balance & Equity Synchronization**: Syncs trade volume, asset symbols, ticket prices, and net profits instantly, updating internal trading account balance ledgers and executing rule audits.
+
 ---
 
 ## 🚀 Running Locally
