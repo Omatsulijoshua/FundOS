@@ -19,7 +19,11 @@
   },
   "pnpm": {
     "only-built-dependencies": [
-      "esbuild"
+      "esbuild",
+      "unrs-resolver",
+      "@prisma/engines",
+      "prisma",
+      "@prisma/client"
     ]
   },
   "packageManager": "pnpm@11.18.0"

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fundos-postgres
+    ports:
+      - '5435:5432'
+    environment:
+      POSTGRES_USER: fundos_admin
+      POSTGRES_PASSWORD: fundos_secure_password_2026
+      POSTGRES_DB: fundos_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - fundos-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: fundos-redis
+    ports:
+      - '6382:6379'
+    volumes:
+      - redisdata:/data
+    networks:
+      - fundos-network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  fundos-network:
+    driver: bridge

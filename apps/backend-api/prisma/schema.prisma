@@ -1,0 +1,490 @@
+// This is the core Prisma schema for FundOS
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SystemRole {
+  SUPER_ADMIN
+  ORG_ADMIN
+  RISK_MANAGER
+  SUPPORT_AGENT
+  TRADER
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  PAST_DUE
+}
+
+enum ChallengeStatus {
+  ACTIVE
+  PASSED
+  FAILED
+  EXPIRED
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  VIOLATED
+  ARCHIVED
+}
+
+enum ViolationType {
+  DAILY_DRAWDOWN
+  MAX_DRAWDOWN
+  WEEKEND_HOLD
+  NEWS_TRADING
+  SUSPICIOUS_BEHAVIOR
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+enum KycStatus {
+  UNSUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// ----------------------------------------------------
+// Tenant & Organization Management
+// ----------------------------------------------------
+
+model Organization {
+  id             String         @id @default(uuid())
+  name           String
+  slug           String         @unique
+  customDomain   String?        @unique
+  logoUrl        String?
+  primaryColor   String         @default("#0F172A")
+  secondaryColor String         @default("#3B82F6")
+  status         TenantStatus   @default(TRIAL)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?      // Soft delete
+
+  // Relations
+  members        OrganizationMember[]
+  challenges     Challenge[]
+  accounts       TradingAccount[]
+  settings       TenantSettings?
+  apiKeys        APIKey[]
+  affiliates     Affiliate[]
+  supportTickets SupportTicket[]
+  transactions   Transaction[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid())
+  orgId          String
+  userId         String
+  role           SystemRole   @default(TRADER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+model TenantSettings {
+  id             String       @id @default(uuid())
+  orgId          String       @unique
+  stripeConfig   Json?        // Encrypted stripe API keys
+  cryptoConfig   Json?        // Crypto wallet payouts endpoints
+  emailTemplates Json?        // Custom layout maps
+  riskConfig     Json?        // Global fraud risk settings
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// User Management & Security
+// ----------------------------------------------------
+
+model User {
+  id                 String               @id @default(uuid())
+  email              String               @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  avatarUrl          String?
+  isVerified         Boolean              @default(false)
+  twoFactorEnabled   Boolean              @default(false)
+  twoFactorSecret    String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+
+  // Relations
+  memberships        OrganizationMember[]
+  wallets            Wallet[]
+  kyc                KycDetail?
+  auditLogs          AuditLog[]
+  sessions           UserSession[]
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+// ----------------------------------------------------
+// Challenge Management
+// ----------------------------------------------------
+
+model Challenge {
+  id               String           @id @default(uuid())
+  orgId            String
+  name             String           // e.g. "$10,000 Premium Evaluation"
+  price            Decimal          @db.Decimal(10, 2)
+  currency         String           @default("USD")
+  leverage         String           @default("1:100")
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  // Rules Configuration
+  profitTargetPct  Decimal          @db.Decimal(5, 2)
+  dailyDrawdownPct Decimal          @db.Decimal(5, 2)
+  maxDrawdownPct   Decimal          @db.Decimal(5, 2)
+  minTradingDays   Int              @default(5)
+  durationDays     Int              @default(30)
+  newsTradingRestr Boolean          @default(false)
+  weekendHolding   Boolean          @default(false)
+  copyTradingRestr Boolean          @default(true)
+
+  organization     Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  purchases        ChallengePurchase[]
+
+  @@index([orgId])
+}
+
+model ChallengePurchase {
+  id           String          @id @default(uuid())
+  challengeId  String
+  traderId     String          // OrgMember ID
+  status       ChallengeStatus @default(ACTIVE)
+  startedAt    DateTime        @default(now())
+  endsAt       DateTime
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  challenge    Challenge       @relation(fields: [challengeId], references: [id])
+  accounts     TradingAccount[]
+}
+
+// ----------------------------------------------------
+// Trading Accounts & Executions
+// ----------------------------------------------------
+
+model TradingAccount {
+  id                  String             @id @default(uuid())
+  orgId               String
+  purchaseId          String?
+  platformId          String             // Link to TradingPlatform
+  login               String             @unique // Broker server account login
+  password            String             // Broker account password (encrypted)
+  investorPassword    String?
+  serverName          String             // MetaTrader / cTrader Server
+  balance             Decimal            @db.Decimal(15, 2)
+  equity              Decimal            @db.Decimal(15, 2)
+  startingBalance     Decimal            @db.Decimal(15, 2)
+  maxDailyDrawdownLimit Decimal          @db.Decimal(15, 2)
+  maxDrawdownLimit    Decimal            @db.Decimal(15, 2)
+  status              AccountStatus      @default(ACTIVE)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  organization        Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  purchase            ChallengePurchase? @relation(fields: [purchaseId], references: [id])
+  platform            TradingPlatform    @relation(fields: [platformId], references: [id])
+  trades              Trade[]
+  positions           Position[]
+  riskViolations      RiskViolation[]
+  riskScores          RiskScore[]
+
+  @@index([orgId])
+  @@index([login])
+}
+
+model TradingPlatform {
+  id        String           @id @default(uuid())
+  name      String           // MT4, MT5, CTRADER, MATCHTRADER
+  version   String?
+  apiUrl    String
+  isActive  Boolean          @default(true)
+  accounts  TradingAccount[]
+}
+
+model Trade {
+  id             String         @id @default(uuid())
+  accountId      String
+  ticketId       String         @unique // External platform ticket ID
+  symbol         String
+  volume         Decimal        @db.Decimal(10, 2)
+  type           String         // BUY, SELL, BALANCE
+  openPrice      Decimal        @db.Decimal(15, 5)
+  closePrice     Decimal?       @db.Decimal(15, 5)
+  openTime       DateTime
+  closeTime      DateTime?
+  profit         Decimal        @db.Decimal(15, 2)
+  swap           Decimal        @db.Decimal(15, 2)
+  commission     Decimal        @db.Decimal(15, 2)
+  magicNumber    Int?
+  comment        String?
+  createdAt      DateTime       @default(now())
+
+  account        TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  @@index([accountId])
+  @@index([openTime])
+}
+
+model Position {
+  id             String         @id @default(uuid())
+  accountId      String
+  ticketId       String         @unique
+  symbol         String
+  volume         Decimal        @db.Decimal(10, 2)
+  type           String         // BUY, SELL
+  openPrice      Decimal        @db.Decimal(15, 5)
+  openTime       DateTime
+  currentPrice   Decimal        @db.Decimal(15, 5)
+  profit         Decimal        @db.Decimal(15, 2)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  account        TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  @@index([accountId])
+}
+
+// ----------------------------------------------------
+// Risk Monitoring
+// ----------------------------------------------------
+
+model RiskViolation {
+  id             String         @id @default(uuid())
+  accountId      String
+  violationType  ViolationType
+  description    String
+  triggeredAt    DateTime       @default(now())
+  metadata       Json?          // Stores metric values at the time of violation (e.g. current equity, max limit)
+
+  account        TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  @@index([accountId])
+}
+
+model RiskScore {
+  id             String         @id @default(uuid())
+  accountId      String
+  score          Int            // 0 - 100
+  metrics        Json           // Holds subscores: winRate, profitFactor, lotVariance, tradeFreq, revengeTradingPct
+  calculatedAt   DateTime       @default(now())
+
+  account        TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  @@index([accountId])
+}
+
+// ----------------------------------------------------
+// Financial & KYC Modules
+// ----------------------------------------------------
+
+model Wallet {
+  id             String         @id @default(uuid())
+  userId         String
+  currency       String         @default("USD")
+  balance        Decimal        @db.Decimal(15, 2) @default(0.00)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  withdrawals    Withdrawal[]
+
+  @@unique([userId, currency])
+}
+
+model Transaction {
+  id             String         @id @default(uuid())
+  walletId       String
+  orgId          String
+  amount         Decimal        @db.Decimal(15, 2)
+  type           String         // FUNDING, PURCHASE, WITHDRAWAL, PAYOUT_SHARE, BONUS
+  status         String         // PENDING, COMPLETED, FAILED
+  reference      String?        // Stripe Intent ID or External TxHash
+  createdAt      DateTime       @default(now())
+
+  wallet         Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model Withdrawal {
+  id             String         @id @default(uuid())
+  walletId       String
+  amount         Decimal        @db.Decimal(15, 2)
+  method         String         // BANK_WIRE, CRYPTO, DEEL, PAYPAL
+  payoutDetails  String         // Encrypted wallet details/IBAN
+  status         PayoutStatus   @default(PENDING)
+  processedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  wallet         Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model KycDetail {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  status         KycStatus      @default(UNSUBMITTED)
+  idType         String?        // PASSPORT, DRIVERS_LICENSE, NATIONAL_ID
+  idNumber       String?
+  nationality    String?
+  providerRef    String?        // Reference ID from Sumsub/Jumio
+  verifiedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents      KycDocument[]
+}
+
+model KycDocument {
+  id             String         @id @default(uuid())
+  kycId          String
+  docType        String         // IDENTITY_FRONT, IDENTITY_BACK, PROOF_OF_ADDRESS
+  fileUrl        String
+  createdAt      DateTime       @default(now())
+
+  kyc            KycDetail      @relation(fields: [kycId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// Affiliate Management
+// ----------------------------------------------------
+
+model Affiliate {
+  id             String         @id @default(uuid())
+  orgId          String
+  userId         String         // References User
+  referralCode   String         @unique
+  commissionPct  Decimal        @db.Decimal(5, 2) @default(10.00)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  commissions    AffiliateCommission[]
+  coupons        Coupon[]
+
+  @@unique([orgId, userId])
+}
+
+model AffiliateCommission {
+  id             String         @id @default(uuid())
+  affiliateId    String
+  referredUserId String
+  purchaseAmount Decimal        @db.Decimal(10, 2)
+  earnedAmount   Decimal        @db.Decimal(10, 2)
+  status         String         @default("PENDING") // PENDING, PAID
+  createdAt      DateTime       @default(now())
+
+  affiliate      Affiliate      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id             String         @id @default(uuid())
+  orgId          String
+  affiliateId    String?
+  code           String         @unique
+  discountPct    Decimal        @db.Decimal(5, 2)
+  isActive       Boolean        @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+
+  affiliate      Affiliate?     @relation(fields: [affiliateId], references: [id])
+}
+
+// ----------------------------------------------------
+// Operations & Infrastructure Logs
+// ----------------------------------------------------
+
+model SupportTicket {
+  id             String         @id @default(uuid())
+  orgId          String
+  traderId       String         // OrgMember ID
+  subject        String
+  status         String         @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  priority       String         @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  messages       TicketMessage[]
+}
+
+model TicketMessage {
+  id             String         @id @default(uuid())
+  ticketId       String
+  senderId       String         // User ID
+  message        String
+  isSupportAgent Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  ticket         SupportTicket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id             String         @id @default(uuid())
+  userId         String?
+  action         String         // e.g. "USER_LOGIN", "VIOLATION_TRIGGERED", "WITHDRAWAL_APPROVED"
+  entityName     String         // e.g. "TradingAccount"
+  entityId       String
+  previousData   Json?
+  newData        Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime       @default(now())
+
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model APIKey {
+  id             String         @id @default(uuid())
+  orgId          String
+  name           String
+  keyPrefix      String         // e.g. "fuo_live_"
+  keyHash        String         @unique
+  scopes         String[]       // Array of permissions
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+  lastUsedAt     DateTime?
+
+  organization   Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
