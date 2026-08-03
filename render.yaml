@@ -1,0 +1,36 @@
+# FundOS Render Infrastructure Blueprint
+# ==============================================================================
+databases:
+  - name: fundos-db-prod
+    databaseName: fundos_db
+    user: fundos_admin
+    plan: free
+
+services:
+  - type: redis
+    name: fundos-redis-prod
+    plan: free
+    ipAllowList: [] # Allow internal access only
+
+  - type: web
+    name: fundos-backend-api
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter backend-api exec prisma generate && pnpm --filter backend-api run build
+    startCommand: pnpm --filter backend-api run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fundos-db-prod
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: fundos-redis-prod
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
