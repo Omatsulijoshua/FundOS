@@ -91,6 +91,11 @@ We have established the core micro-monolith framework and global request/respons
     - **Performance Metrics portal**: Returns real-time aggregate statistics for partner portals, summarizing total link clicks, user registrations, conversion rates, and earnings.
     - **Discount Code validation**: Allows administrators to configure custom promo codes (`Coupon` model) supporting expiry dates and custom discount percentages.
 
+13. **Trading Performance Analytics Engine (`src/modules/analytics/`)** (Phase 14)
+    - **Advanced Metrics Calculator**: Computes performance statistics including overall Win Rate, Profit Factor, Average Trade Gain/Loss, Standard Deviation, and trade durations.
+    - **Trade-based Sharpe Ratio**: Dynamically assesses risk-adjusted returns based on execution returns volatility scaled against historical benchmarks.
+    - **Historical Equity Curve Reconstruction**: Iterates over account trades sorted chronologically, generating a precise cumulative balance curve mapping equity fluctuations without requiring additional database tables.
+
 ---
 
 ## 🚀 Running Locally

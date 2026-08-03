@@ -11,6 +11,7 @@ import { IntegrationModule } from './modules/integration/integration.module';
 import { RiskModule } from './modules/risk/risk.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { AffiliateModule } from './modules/affiliate/affiliate.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
@@ -26,6 +27,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     RiskModule,
     PaymentModule,
     AffiliateModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
