@@ -15,6 +15,52 @@ importers:
         specifier: ^5.4.5
         version: 5.9.3
 
+  apps/admin-dashboard:
+    dependencies:
+      '@fundos/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      lucide-react:
+        specifier: ^0.474.0
+        version: 0.474.0(react@19.2.4)
+      next:
+        specifier: 16.2.12
+        version: 16.2.12(@babel/core@7.29.7(supports-color@8.1.1))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@fundos/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@tailwindcss/postcss':
+        specifier: ^4
+        version: 4.3.3
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@types/react':
+        specifier: ^19
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.4(@types/react@19.2.18)
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
+      eslint-config-next:
+        specifier: 16.2.12
+        version: 16.2.12(@typescript-eslint/parser@8.65.0(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
+      tailwindcss:
+        specifier: ^4
+        version: 4.3.3
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   apps/backend-api:
     dependencies:
       '@nestjs/common':
@@ -3839,6 +3885,11 @@ packages:
     resolution: {integrity: sha512-u6EPU8juLUk9ytRcyapkWI18epAv3RU+6+TC23ivjR0e+glWKBobFeSgRwOIJihzktILQuy6E0E80P2jVTDR5g==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0
+
+  lucide-react@0.474.0:
+    resolution: {integrity: sha512-CmghgHkh0OJNmxGKWc0qfPJCYHASPMVSyGY8fj3xgk4v84ItqDg64JNKFZn5hC6E0vHi6gxnbCgwhyVB09wQtA==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
@@ -9151,6 +9202,10 @@ snapshots:
   lucide-react@0.378.0(react@19.2.8):
     dependencies:
       react: 19.2.8
+
+  lucide-react@0.474.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   magic-string@0.30.17:
     dependencies:
