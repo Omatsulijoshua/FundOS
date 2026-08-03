@@ -85,6 +85,12 @@ We have established the core micro-monolith framework and global request/respons
     - **Administrative Payout control**: Exposes interfaces for managers to audit pending withdrawals, release payouts, log transactions, and reject requests (restoring locked balances).
     - **Checkout Session Callback Webhooks**: Standard listeners to capture Stripe transaction states, verify challenge purchases, and trigger automated MT5/cTrader simulated credentials provisioning.
 
+12. **Affiliate Partner & Discount Coupons Engine (`src/modules/affiliate/`)** (Phase 13)
+    - **Partner Opt-in Program**: Enables members to register as affiliates, generating a unique referral code and tracking link.
+    - **Referral Commission Tracking**: Automatically scans referral identifiers and calculates payouts (defaulting to a 10% rate) to compile unpaid/paid commission histories.
+    - **Performance Metrics portal**: Returns real-time aggregate statistics for partner portals, summarizing total link clicks, user registrations, conversion rates, and earnings.
+    - **Discount Code validation**: Allows administrators to configure custom promo codes (`Coupon` model) supporting expiry dates and custom discount percentages.
+
 ---
 
 ## 🚀 Running Locally
