@@ -59,6 +59,13 @@ We have established the core micro-monolith framework and global request/respons
    - **Role-Based Access Control (`RolesGuard`)**: Checks membership roles (e.g. `ORG_ADMIN`, `TRADER`, `SUPPORT_AGENT`) against endpoints annotated with the `@Roles()` decorator.
    - **Dynamic Branding API**: Exposes endpoints (`GET /tenant/branding`) to pull colors/logos dynamically, and admin endpoints (`PATCH /tenant/settings`, `PATCH /tenant/branding`) to customize payment configurations, custom domains, and risk limits.
 
+8. **Challenge Orchestration & Rules Evaluation Engine (`src/modules/challenge/`)** (Phase 9)
+   - **Challenge Preset Queries**: Dynamic filters allowing traders to query valid challenge packages configured by their firm.
+   - **Simulated Accounts Provisioning**: Auto-generates unique simulated account numbers and secure passwords for MetaTrader 5 or cTrader upon challenge checkouts.
+   - **Ledger Transactions Recording**: Automatically writes database transaction records and deducts payments from user wallets to enforce billing tracking.
+   - **Real-Time Drawdown & Profit Checks**: Evaluates equity fluctuations against strict limits (such as daily drawdown percentage, maximum overall drawdown, target profit milestones, and minimum unique trading days).
+   - **Automatic Phase Progression**: Frozen accounts that violate rules are marked `VIOLATED`. Accounts that pass successfully are marked `ARCHIVED`, triggering automated progressions from Phase 1 to Phase 2, and Phase 2 to Funded.
+
 ---
 
 ## 🚀 Running Locally
