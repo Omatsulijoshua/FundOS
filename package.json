@@ -24,7 +24,8 @@
       "@prisma/engines",
       "prisma",
       "@prisma/client",
-      "@scarf/scarf"
+      "@scarf/scarf",
+      "sharp"
     ]
   },
   "packageManager": "pnpm@11.18.0"
