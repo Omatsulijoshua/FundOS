@@ -96,6 +96,11 @@ We have established the core micro-monolith framework and global request/respons
     - **Trade-based Sharpe Ratio**: Dynamically assesses risk-adjusted returns based on execution returns volatility scaled against historical benchmarks.
     - **Historical Equity Curve Reconstruction**: Iterates over account trades sorted chronologically, generating a precise cumulative balance curve mapping equity fluctuations without requiring additional database tables.
 
+14. **AI-powered Trading Coach & Advisor (`src/modules/ai/`)** (Phase 15)
+    - **Dynamic Behavioral Coaching Summary**: Audits actual trader execution tables, warning users of cognitive biases (like revenge trading inside 10 minutes or lot sizing spikes) and offering customized strengths analysis.
+    - **Trade Recommendations & Market Sentiment**: Simulates algorithmic trade setups and market trends analysis (EURUSD, GBPUSD, XAUUSD) with confidence ratings and entry/exit levels.
+    - **Interactive NLP Coaching Chat**: Conversational interface enabling traders to ask questions about risk rules, psychology management, or leverage limits, with context-aware responses.
+
 ---
 
 ## 🚀 Running Locally
