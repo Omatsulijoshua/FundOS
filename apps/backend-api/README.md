@@ -44,6 +44,14 @@ We have established the core micro-monolith framework and global request/respons
 5. **Operational Health Monitoring (`/health`)**
    - Performs a quick raw check against PostgreSQL to confirm DB engine responsiveness and returns service statuses.
 
+6. **Authentication & Session Manager (`src/modules/auth/`)** (Phase 5)
+   - **Local Email Signups**: Creates user records, hashes passwords with salt cycles using `bcryptjs`.
+   - **JWT Tokens Flow**: Issues short-lived access tokens (15m) and long-lived refresh tokens (7d).
+   - **HTTP-Only Cookies**: Automatically sets tokens on response cookies (with `httpOnly: true`, `sameSite: 'strict'`, `secure: false` for local dev) to prevent cross-site scripting (XSS) attacks.
+   - **Bearer Tokens Fallback**: Extracts authorization headers from mobile API requests when cookies are absent.
+   - **Two-Factor Authentication (2FA)**: Generates random TOTP shared secrets, builds QR codes via data URLs, verifies confirmation codes, and enforces verification on subsequent logins.
+   - **Rotate & Clear Sessions**: Revokes sessions dynamically on logout and rotates tokens on session refresh.
+
 ---
 
 ## 🚀 Running Locally
