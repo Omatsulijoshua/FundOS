@@ -1,0 +1,26 @@
+{
+  "name": "fundos-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FundOS - The Operating System for Proprietary Trading Firms",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.4",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "only-built-dependencies": [
+      "esbuild"
+    ]
+  },
+  "packageManager": "pnpm@11.18.0"
+}
